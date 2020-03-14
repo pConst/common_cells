@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 ### Added
-### Fixed 
+- SECDED (Single Error Correction, Double Error Detection) encoder and decoder
+- SECDED Verilator-based testbench
+
+### Fixed
 
 ## 1.16.4 - 2020-03-02
 ### Fixed
@@ -18,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 1.16.2 - 2020-02-04
 ### Fixed
-- Fix author section in Bender.yml 
+- Fix author section in Bender.yml
 
 ## 1.16.1 - 2020-02-03
 ### Fixed
