@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - SECDED (Single Error Correction, Double Error Detection) encoder and decoder
 - SECDED Verilator-based testbench
+- Travis build for SECDED module
 
 ### Fixed
 

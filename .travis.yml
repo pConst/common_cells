@@ -1,0 +1,27 @@
+language: cpp
+cache:
+  apt: true
+
+# required packages to install
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - verilator
+
+stages:
+  - test
+
+jobs:
+  include:
+    - stage: test
+      name: test encode
+      script:
+        - make
+        - ./obj_dir/Vecc_encode > /dev/zero
+    - stage: test
+      name: test decode
+      script:
+        - make
+        - ./obj_dir/Vecc_decode > /dev/zero
