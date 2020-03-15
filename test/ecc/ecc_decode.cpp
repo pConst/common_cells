@@ -41,7 +41,7 @@ int main(int argc, char** argv, char** env) {
     uint8_t encoded_word [cw_byte];
     uint8_t parity [d];
 
-    uint8_t single_error, double_error;
+    uint8_t single_error, parity_error, double_error;
 
     Verilated::traceEverOn(true);
     VerilatedVcdC* tfp = new VerilatedVcdC;
@@ -65,6 +65,7 @@ int main(int argc, char** argv, char** env) {
         // randomly inject some errors
         single_error = 0;
         double_error = 0;
+        parity_error = 0;
 
         switch (random() % 10) {
             // inject single error
@@ -76,7 +77,7 @@ int main(int argc, char** argv, char** env) {
             // parity error
             case 1:
                 printf("Injecting parity error\n");
-                single_error = 1;
+                parity_error = 1;
                 dut->data_i[cw_byte-1] ^= 0x80;
                 break;
             // inject double error
@@ -93,6 +94,7 @@ int main(int argc, char** argv, char** env) {
         printf("[DUT] output = %lx\n", dut->data_o);
         assert (double_error || dut->data_o == word);
         assert (dut->single_error_o == single_error);
+        assert (dut->parity_error_o == parity_error);
         assert (dut->double_error_o == double_error);
         // Advance Time
         main_time++;

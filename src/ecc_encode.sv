@@ -15,15 +15,15 @@
 // with extended parity bit [1].
 // The module receives a data word and encodes it using above mentioned error
 // detection and correction code. The corresponding decode module
-// can be found in ecc_decode.sv
+// can be found in `ecc_decode.sv`
 // [1] https://en.wikipedia.org/wiki/Hamming_code
 
 // Author: Florian Zaruba <zarubaf@iis.ee.ethz.ch>
 module ecc_encode #(
   parameter  int unsigned DataWidth   = 64,
   // Do not change
-  parameter int unsigned ParityWidth   = ecc_pkg::get_cw_width(DataWidth),
-  parameter int unsigned CodeWordWidth = DataWidth + ParityWidth
+  parameter int unsigned ParityWidth   = ecc_pkg::get_parity_width(DataWidth),
+  parameter int unsigned CodeWordWidth = ecc_pkg::get_cw_width(DataWidth)
 ) (
   input  logic [DataWidth-1:0]   data_i,
   output logic [CodeWordWidth:0] data_o
@@ -36,12 +36,12 @@ logic                     parity;
 
 // Expand incoming data to codeword width
 always_comb begin : expand_data
-  automatic int idx;
+  automatic int unsigned idx;
   data = '0;
   idx = 0;
-  for (int i = 1; i < CodeWordWidth + 1; i++) begin
+  for (int unsigned i = 1; i < CodeWordWidth + 1; i++) begin
     // if it is not a power of two word it is a normal data index
-    if (2**$clog2(i) != i) begin
+    if (unsigned'(2**$clog2(i)) != i) begin
       data[i - 1] = data_i[idx];
       idx++;
     end
@@ -51,9 +51,9 @@ end
 // calculate codeword
 always_comb begin : calculate_syndrome
   parity_codeword = 0;
-  for (int i = 0; i < ParityWidth; i++) begin
-    for (int j = 1; j < CodeWordWidth + 1; j++) begin
-      if (|(2**i & j)) parity_codeword[i] = parity_codeword[i] ^ data[j - 1];
+  for (int unsigned i = 0; i < ParityWidth; i++) begin
+    for (int unsigned j = 1; j < CodeWordWidth + 1; j++) begin
+      if (|(unsigned'(2**i) & j)) parity_codeword[i] = parity_codeword[i] ^ data[j - 1];
     end
   end
 end
@@ -61,7 +61,7 @@ end
 // fuse the final codeword
 always_comb begin : generate_codeword
     codeword = data;
-    for (int i = 0; i < ParityWidth; i++) begin
+    for (int unsigned i = 0; i < ParityWidth; i++) begin
       codeword[2**i-1] = parity_codeword[i];
     end
 end

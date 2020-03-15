@@ -20,20 +20,23 @@
 // 1. If no error has been detected the syndrome will be zero, all flags will be zero
 // 2. If a single error has been detected the syndrome is non-zero, single-error will be
 //    asserted. The output word is contains the corrected data.
-// 3. In case of an double fault the syndrome is non-zero, double_error will be asserted.
+// 3. If the parity bit contained an error the module will assert `parity_error_o`.
+// 4. In case of a double fault the syndrome is non-zero, `double_error_o` will be asserted.
 //    all other status flags will be de-asserted.
+//
 // [1] https://en.wikipedia.org/wiki/Hamming_code
 
 module ecc_decode #(
   parameter  int unsigned DataWidth   = 64,
   // Do not change
-  parameter int unsigned ParityWidth   = ecc_pkg::get_cw_width(DataWidth),
-  parameter int unsigned CodeWordWidth = DataWidth + ParityWidth
+  parameter int unsigned ParityWidth   = ecc_pkg::get_parity_width(DataWidth),
+  parameter int unsigned CodeWordWidth = ecc_pkg::get_cw_width(DataWidth)
 ) (
   input  logic [CodeWordWidth:0] data_i,
   output logic [DataWidth-1:0]   data_o,
   output logic [ParityWidth-1:0] syndrome_o, // indicates the errornouse bit position
   output logic                   single_error_o,
+  output logic                   parity_error_o, // error received in parity bit (MSB)
   output logic                   double_error_o
 );
 
@@ -69,9 +72,9 @@ module ecc_decode #(
   //    parity position and the bit position is non-zero.
   always_comb begin : calculate_syndrome
     syndrome = 0;
-    for (int i = 0; i < ParityWidth; i++) begin
-      for (int j = 0; j < CodeWordWidth; j++) begin
-        if (|(2**i & (j + 1))) syndrome[i] = syndrome[i] ^ data[j];
+    for (int unsigned i = 0; i < ParityWidth; i++) begin
+      for (int unsigned j = 0; j < CodeWordWidth; j++) begin
+        if (|(unsigned'(2**i) & (j + 1))) syndrome[i] = syndrome[i] ^ data[j];
       end
     end
   end
@@ -92,18 +95,19 @@ module ecc_decode #(
   // /=0      | 1                    | Single Error | Correctable. Syndrome holds incorrect bit position.
   // 0        | 1                    | Parity Error | Overall parity, MSB is in error and can be corrected.
   // /=0      | 0                    | Double Error | Not correctable.
-  assign single_error_o = (parity & syndrome_not_zero) | (parity & ~syndrome_not_zero);
+  assign single_error_o = parity & syndrome_not_zero;
+  assign parity_error_o = parity & ~syndrome_not_zero;
   assign double_error_o = ~parity & syndrome_not_zero;
 
   // Extract data vector
   always_comb begin
-    automatic int idx; // bit index
+    automatic int unsigned idx; // bit index
     data_wo_parity = '0;
     idx = 0;
 
-    for (int i = 1; i < CodeWordWidth + 1; i++) begin
+    for (int unsigned i = 1; i < CodeWordWidth + 1; i++) begin
       // if i is a power of two we are indexing a parity bit
-      if (2**$clog2(i) != i) begin
+      if (unsigned'(2**$clog2(i)) != i) begin
         data_wo_parity[idx] = correct_data[i - 1];
         idx++;
       end
