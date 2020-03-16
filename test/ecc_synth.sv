@@ -11,7 +11,8 @@
 module ecc_synth;
 
     for (genvar dw = 8; dw < 32; dw += 8) begin
-        logic [ecc_pkg::get_cw_width(dw):0] codeword;
+        // codeword + parity bit
+        logic [ecc_pkg::get_cw_width(dw)-1:0] codeword;
         ecc_encode #(.DataWidth(dw)) i_encode (.data_i(), .data_o(codeword));
         ecc_decode #(.DataWidth(dw))
         i_decode (
