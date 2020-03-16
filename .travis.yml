@@ -1,6 +1,9 @@
 language: cpp
 cache:
   apt: true
+  directories:
+    $VERILATOR_ROOT
+  timeout: 1000
 
 env:
   global:
