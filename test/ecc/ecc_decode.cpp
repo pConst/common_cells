@@ -72,7 +72,7 @@ int main(int argc, char** argv, char** env) {
             case 0:
                 printf("Injecting single error\n");
                 single_error = 1;
-                dut->data_i[0] ^= 0x4;
+                dut->data_i[random() % (cw_byte - 1)] ^= 0x1 << (random() % 8);
                 break;
             // parity error
             case 1:
@@ -84,7 +84,7 @@ int main(int argc, char** argv, char** env) {
             case 2:
                 printf("Injecting double error\n");
                 double_error = 1;
-                dut->data_i[0] ^= 0x3 << 14;
+                dut->data_i[random() % (cw_byte - 1)] ^= 0x3 << (random() % 8);
                 break;
         }
 
@@ -110,5 +110,3 @@ int main(int argc, char** argv, char** env) {
     delete dut;
     exit(0);
 }
-
-

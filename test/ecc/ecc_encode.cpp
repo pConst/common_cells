@@ -56,6 +56,7 @@ int main(int argc, char** argv, char** env) {
             toBin(info, dut->data_o[i], 32);
             // check each bit
             for (int j = 0; j < 32; j++) {
+                // printf("%d ", j);
                 if (j + i*32 < d + p + 1) assert(info[j] == codeword[j + i*32]);
             }
         }
@@ -73,5 +74,3 @@ int main(int argc, char** argv, char** env) {
     delete dut;
     exit(0);
 }
-
-

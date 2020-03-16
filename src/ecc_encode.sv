@@ -16,58 +16,60 @@
 // The module receives a data word and encodes it using above mentioned error
 // detection and correction code. The corresponding decode module
 // can be found in `ecc_decode.sv`
+//
 // [1] https://en.wikipedia.org/wiki/Hamming_code
 
-// Author: Florian Zaruba <zarubaf@iis.ee.ethz.ch>
-module ecc_encode #(
+module ecc_encode import ecc_pkg::*; #(
   parameter  int unsigned DataWidth   = 64,
   // Do not change
-  parameter int unsigned ParityWidth   = ecc_pkg::get_parity_width(DataWidth),
-  parameter int unsigned CodeWordWidth = ecc_pkg::get_cw_width(DataWidth)
+  parameter type data_t         = logic [DataWidth-1:0],
+  parameter type parity_t       = logic [get_parity_width(DataWidth)-1:0],
+  parameter type code_word_t    = logic [get_cw_width(DataWidth)-2:0],
+  parameter type encoded_data_t = struct packed {
+                                    logic parity;
+                                    code_word_t code_word;
+                                  }
 ) (
-  input  logic [DataWidth-1:0]   data_i,
-  output logic [CodeWordWidth:0] data_o
+  input  data_t         data_i,
+  output encoded_data_t data_o
 );
 
-logic [ParityWidth-1:0]   parity_codeword;
-logic [CodeWordWidth-1:0] data;
-logic [CodeWordWidth-1:0] codeword;
-logic                     parity;
+  parity_t parity_code_word;
+  code_word_t data, codeword;
 
-// Expand incoming data to codeword width
-always_comb begin : expand_data
-  automatic int unsigned idx;
-  data = '0;
-  idx = 0;
-  for (int unsigned i = 1; i < CodeWordWidth + 1; i++) begin
-    // if it is not a power of two word it is a normal data index
-    if (unsigned'(2**$clog2(i)) != i) begin
-      data[i - 1] = data_i[idx];
-      idx++;
+  // Expand incoming data to codeword width
+  always_comb begin : expand_data
+    automatic int unsigned idx;
+    data = '0;
+    idx = 0;
+    for (int unsigned i = 1; i < unsigned'($bits(code_word_t)) + 1; i++) begin
+      // if it is not a power of two word it is a normal data index
+      if (unsigned'(2**$clog2(i)) != i) begin
+        data[i - 1] = data_i[idx];
+        idx++;
+      end
     end
   end
-end
 
-// calculate codeword
-always_comb begin : calculate_syndrome
-  parity_codeword = 0;
-  for (int unsigned i = 0; i < ParityWidth; i++) begin
-    for (int unsigned j = 1; j < CodeWordWidth + 1; j++) begin
-      if (|(unsigned'(2**i) & j)) parity_codeword[i] = parity_codeword[i] ^ data[j - 1];
+  // calculate code word
+  always_comb begin : calculate_syndrome
+    parity_code_word = 0;
+    for (int unsigned i = 0; i < unsigned'($bits(parity_t)); i++) begin
+      for (int unsigned j = 1; j < unsigned'($bits(code_word_t)) + 1; j++) begin
+        if (|(unsigned'(2**i) & j)) parity_code_word[i] = parity_code_word[i] ^ data[j - 1];
+      end
     end
   end
-end
 
-// fuse the final codeword
-always_comb begin : generate_codeword
-    codeword = data;
-    for (int unsigned i = 0; i < ParityWidth; i++) begin
-      codeword[2**i-1] = parity_codeword[i];
-    end
-end
+  // fuse the final codeword
+  always_comb begin : generate_codeword
+      codeword = data;
+      for (int unsigned i = 0; i < unsigned'($bits(parity_t)); i++) begin
+        codeword[2**i-1] = parity_code_word[i];
+      end
+  end
 
-assign parity = ^codeword;
-// output the final codeword
-assign data_o = {parity, codeword};
+  assign data_o.code_word = codeword;
+  assign data_o.parity = ^codeword;
 
 endmodule
