@@ -7,7 +7,6 @@ cache:
 
 env:
   global:
-    - RISCV="/home/travis/riscv_install"
     - VERILATOR_ROOT="/home/travis/verilator-4.014/"
 
     # required packages to install
